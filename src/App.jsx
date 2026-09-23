@@ -24,7 +24,21 @@ function App() {
     }, []);
 
     function handleAddEvent(newEvent) {
-        setEvents([...events, newEvent]);
+        fetch("http://localhost:5000/api/events",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body: JSON.stringify(newEvent)
+        }).then((response)=>response.json())
+        .then((data)=>{
+            console.log(data);
+            fetch("http://localhost:5000/api/events")
+            .then((response)=>response.json())
+            .then((data)=>{
+                setEvents(data);
+            });
+        });
     }
 
     function handleDeleteEvent(eventId) {
@@ -42,6 +56,10 @@ function App() {
         
   }
 
+  function handleEditEvent(eventId, updatedEvent){
+    console.log("Editing event with ID:", eventId);
+  }
+
     return (
         <div>
             <Navbar />
@@ -54,6 +72,7 @@ function App() {
                             events={events}
                             onAddEvent={handleAddEvent}
                             onDeleteEvent={handleDeleteEvent}
+                            onEditEvent={handleEditEvent}
                         />
                     }
                 />
