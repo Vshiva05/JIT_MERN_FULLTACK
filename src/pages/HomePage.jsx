@@ -16,7 +16,7 @@ function HomePage({
         <EventForm 
         onAddEvent={onAddEvent}
         editingEvent={editingEvent}
-        onUpdateEvent={onUpdateEvent}/>
+        onUpdateEvent={onUpdateEvent}/>   
         
         <EventSection 
         events={events}

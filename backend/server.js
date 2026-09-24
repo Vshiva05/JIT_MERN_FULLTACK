@@ -1,9 +1,21 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
+const mongoose = require("mongoose");
 const app = express();
+const Event = require("./models/Event");
+
+
 app.use(cors());
 app.use(express.json());
 
+mongoose.connect(process.env.MONGODB_URI)
+.then(()=>{
+  console.log("MongoDB Conncted successfully!")
+}).catch((error)=>{
+  console.log("MongoDB Connection Error: ", error);
+});
 
 const initialEvents = [
   {
@@ -42,57 +54,54 @@ app.get("/", (req, res)=>{
     res.send("Backend is working");
 })
 
-app.get("/api/events", (req, res)=>{
-    res.json(initialEvents);
+app.get("/api/events", async (req, res)=>{
+    const events =  await Event.find();
+    res.json(events);
 })
 
-app.delete("/api/events/:id", (req, res)=>{
-  const eventId = Number(req.params.id);
-  const eventIndex = initialEvents.findIndex(function(event){
-    return event.id === eventId;
-  });
+app.delete("/api/events/:id", async (req, res)=>{
+  const deletedEvent = await Event.findByIdAndDelete(
+    req.params.id
+  )
 
-  if(eventIndex === -1){
+  if(!deletedEvent){
     return res.status(404).json({
-      message: "Event Not Found"
-    });
+      message: "Event Not Found!"
+    })
   }
-
-  initialEvents.splice(eventIndex, 1);
   res.json({
     message: "Event Deleted Successfully"
   })
   
 })
 
-app.post("/api/events", (req, res)=>{
-  const newEvent = req.body;
-  initialEvents.push(newEvent);
+app.post("/api/events", async (req, res)=>{
+  const newEvent = await Event.create(req.body);
   res.json({
     message: "Event Added Successfully!",
     event: newEvent
   });
 });
 
-app.put("/api/events/:id", (req, res)=>{
-  const eventId = Number(req.params.id);
-  const eventIndex = initialEvents.findIndex(function(event){
-    return event.id === eventId;
+
+app.put("/api/events/:id", async (req, res)=>{
+  const updatedEvent = await Event.findByIdAndUpdate(
+    req.params.id, 
+    req.body,
+     { new: true }
+)
+
+if(!updatedEvent){
+  return res.status(404).json({
+    message: "Event Not Found!"
   });
-   if(eventIndex === -1){
-    return res.status(404).json({
-      message: "Event Not Found"
-    });
-  }
-initialEvents[eventIndex] = {
-  ...initialEvents[eventIndex],
-  ...req.body
-};
-res.json({
-  message: "Event Updated Successfully!",
-  event: initialEvents[eventIndex]
-});
-});
+}
+
+  res.json({
+    message: "Event Updated Successfully!",
+    event: updatedEvent
+  });
+});  
 
 app.listen(5000, ()=>{
     console.log("Server is running on port 5000");
